@@ -1,0 +1,182 @@
+diff -u -r trp-20120628_orig/trp/trp.c trp-20120628/trp/trp.c
+--- trp-20120628_orig/trp/trp.c	2012-06-28 00:00:00.000000000 +0200
++++ trp-20120628/trp/trp.c	2019-06-06 08:17:40.955383720 +0200
+@@ -34,7 +34,7 @@
+ 
+ objfun_t _trp_env_stack = NULL;
+ 
+-static voidfun_t _trp_gc_warn_proc;
++//static voidfun_t _trp_gc_warn_proc;
+ 
+ void trp_init( int argc, char *argv[] )
+ {
+@@ -44,7 +44,7 @@
+     ptw32_processInitialize();
+ #endif
+     GC_INIT();
+-    _trp_gc_warn_proc = GC_set_warn_proc( trp_gc_warn_proc );
++    /*_trp_gc_warn_proc =*/ GC_set_warn_proc( trp_gc_warn_proc );
+     if ( _trp_env_stack == NULL )
+         _trp_env_stack = trp_env_stack;
+     trp_init_check();
+diff -u -r trp-20120628_orig/trpavcodec/trpavcodec.c trp-20120628/trpavcodec/trpavcodec.c
+--- trp-20120628_orig/trpavcodec/trpavcodec.c	2012-06-28 00:00:00.000000000 +0200
++++ trp-20120628/trpavcodec/trpavcodec.c	2019-06-06 08:17:40.955383720 +0200
+@@ -20,6 +20,12 @@
+ #include "../trppix/trppix_internal.h"
+ #include "./trpavcodec.h"
+ 
++#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55,28,1)
++#define avcodec_alloc_frame     av_frame_alloc
++#define av_close_input_file(a)  avformat_close_input(&a)
++extern AVFrame *av_frame_alloc(void);
++#endif
++
+ typedef struct {
+     uns8b tipo;
+     uns8b sottotipo;
+@@ -230,7 +236,7 @@
+     } else {
+         aalg = (uns32b)SWS_BICUBIC;
+     }
+-    if ( sws_ctx = sws_getContext( wwi, hhi, PIX_FMT_RGBA, wwo, hho, PIX_FMT_RGBA, aalg, NULL, NULL, NULL ) ) {
++    if ( sws_ctx = sws_getContext( wwi, hhi, AV_PIX_FMT_RGBA, wwo, hho, AV_PIX_FMT_RGBA, aalg, NULL, NULL, NULL ) ) {
+         obj = trp_gc_malloc_atomic_finalize( sizeof( trp_avcodec_t ), trp_av_finalize );
+         obj->tipo = TRP_AVCODEC;
+         obj->sottotipo = 0;
+@@ -408,7 +414,7 @@
+     ((trp_avcodec_t *)fmtctx)->fmt.sws_ctx = sws_ctx =
+         sws_getCachedContext( ((trp_avcodec_t *)fmtctx)->fmt.sws_ctx,
+                               avctx->width, avctx->height, avctx->pix_fmt,
+-                              ((trp_pix_t *)pix)->w, ((trp_pix_t *)pix)->h, PIX_FMT_RGBA,
++                              ((trp_pix_t *)pix)->w, ((trp_pix_t *)pix)->h, AV_PIX_FMT_RGBA,
+                               SWS_BICUBIC, NULL, NULL, NULL );
+     mapo[ 0 ] = ((trp_pix_t *)pix)->map.p;
+     mapo[ 1 ] = mapo[ 2 ] = mapo[ 3 ] = NULL;
+diff -u -r trp-20120628_orig/trpcv/sift/imgfeatures.c trp-20120628/trpcv/sift/imgfeatures.c
+--- trp-20120628_orig/trpcv/sift/imgfeatures.c	2012-06-28 00:00:00.000000000 +0200
++++ trp-20120628/trpcv/sift/imgfeatures.c	2019-06-06 08:17:40.959383532 +0200
+@@ -9,7 +9,9 @@
+ #include "utils.h"
+ #include "imgfeatures.h"
+ 
+-#include <cxcore.h>
++//#include <cxcore.h>
++#include <math.h>
++#include <opencv2/imgproc/imgproc_c.h>
+ 
+ static int import_oxfd_features( char*, struct feature** );
+ static int export_oxfd_features( char*, struct feature*, int );
+diff -u -r trp-20120628_orig/trpcv/sift/kdtree.c trp-20120628/trpcv/sift/kdtree.c
+--- trp-20120628_orig/trpcv/sift/kdtree.c	2012-06-28 00:00:00.000000000 +0200
++++ trp-20120628/trpcv/sift/kdtree.c	2019-06-06 08:17:40.959383532 +0200
+@@ -19,10 +19,12 @@
+ #include "imgfeatures.h"
+ #include "utils.h"
+ 
+-#include <cxcore.h>
++//#include <cxcore.h>
+ 
+ #include <stdio.h>
+ 
++extern int cvCeil( double );
++
+ struct bbf_data
+ {
+   double d;
+diff -u -r trp-20120628_orig/trpcv/sift/sift.c trp-20120628/trpcv/sift/sift.c
+--- trp-20120628_orig/trpcv/sift/sift.c	2012-06-28 00:00:00.000000000 +0200
++++ trp-20120628/trpcv/sift/sift.c	2019-06-06 08:17:40.959383532 +0200
+@@ -21,8 +21,12 @@
+ #include "imgfeatures.h"
+ #include "utils.h"
+ 
+-#include <cxcore.h>
+-#include <cv.h>
++//#include <cxcore.h>
++//#include <cv.h>
++#include <math.h>
++#include <opencv2/imgproc/imgproc_c.h>
++
++extern int cvFloor( double );
+ 
+ /************************* Local Function Prototypes *************************/
+ 
+diff -u -r trp-20120628_orig/trpcv/sift/utils.c trp-20120628/trpcv/sift/utils.c
+--- trp-20120628_orig/trpcv/sift/utils.c	2012-06-28 00:00:00.000000000 +0200
++++ trp-20120628/trpcv/sift/utils.c	2019-06-06 08:17:40.959383532 +0200
+@@ -8,9 +8,9 @@
+ 
+ #include "utils.h"
+ 
+-#include <cv.h>
+-#include <cxcore.h>
+-#include <highgui.h>
++//#include <cv.h>
++//#include <cxcore.h>
++//#include <highgui.h>
+ 
+ /*
+ #include <gdk/gdk.h>
+diff -u -r trp-20120628_orig/trpcv/sift/xform.c trp-20120628/trpcv/sift/xform.c
+--- trp-20120628_orig/trpcv/sift/xform.c	2012-06-28 00:00:00.000000000 +0200
++++ trp-20120628/trpcv/sift/xform.c	2019-06-06 08:17:40.959383532 +0200
+@@ -11,10 +11,11 @@
+ #include "imgfeatures.h"
+ #include "utils.h"
+ 
+-#include <cxcore.h>
++//#include <cxcore.h>
+ 
+ #include <stdlib.h>
+ #include <time.h>
++#include <math.h>
+ 
+ /************************* Local Function Prototypes *************************/
+ 
+diff -u -r trp-20120628_orig/trpcv/trpcv.c trp-20120628/trpcv/trpcv.c
+--- trp-20120628_orig/trpcv/trpcv.c	2012-06-28 00:00:00.000000000 +0200
++++ trp-20120628/trpcv/trpcv.c	2019-06-06 23:53:48.584882273 +0200
+@@ -25,8 +25,15 @@
+ #include "sift/kdtree.h"
+ #include "sift/sift.h"
+ #include "sift/xform.h"
+-#include <cv.h>
+-#include <highgui.h>
++//#include <cv.h>
++//#include <highgui.h>
++#include <opencv2/core/version.hpp>
++#include <opencv2/opencv_modules.hpp>
++#include <opencv2/core/core_c.h>
++#include <opencv2/highgui/highgui_c.h>
++#if (CV_MAJOR_VERSION == 2)
++#include <opencv2/imgproc/imgproc_c.h>
++#endif
+ 
+ /* the maximum number of keypoint NN candidates to check during BBF search */
+ #define KDTREE_BBF_MAX_NN_CHKS 200
+diff -u -r trp-20120628_orig/trpgcrypt/trpgcrypt.c trp-20120628/trpgcrypt/trpgcrypt.c
+--- trp-20120628_orig/trpgcrypt/trpgcrypt.c	2012-06-28 00:00:00.000000000 +0200
++++ trp-20120628/trpgcrypt/trpgcrypt.c	2019-06-06 08:17:40.959383532 +0200
+@@ -21,6 +21,8 @@
+ #include "../trppix/trppix_internal.h"
+ 
+ extern trp_obj_t *trp_raw_internal( uns32b sz, uns8b use_malloc );
++extern uns32b trp_size_internal( trp_obj_t *obj );
++extern void trp_encode_internal( trp_obj_t *obj, uns8b **buf );
+ 
+ #ifdef TRP_BIG_ENDIAN
+ static uns8b trp_gcry_luby_rackoff_md_initialize( int flags, gcry_md_hd_t *hd, int algo, char *pass );
+diff -u -r trp-20120628_orig/trppix/trppix.c trp-20120628/trppix/trppix.c
+--- trp-20120628_orig/trppix/trppix.c	2012-06-28 00:00:00.000000000 +0200
++++ trp-20120628/trppix/trppix.c	2019-06-06 08:17:40.959383532 +0200
+@@ -34,6 +34,9 @@
+ static trp_obj_t *trp_pix_width( trp_pix_t *pix );
+ static trp_obj_t *trp_pix_height( trp_pix_t *pix );
+ 
++extern uns8b trp_pix_info_gif( uns8b *cpath, uns32b *w, uns32b *h );
++extern uns8b trp_pix_load_gif( uns8b *cpath, uns32b *w, uns32b *h, uns8b **data );
++
+ static uns8b *_trp_pix_format[ TRP_PIX_MAX ] = {
+     "png",
+     "jpeg",

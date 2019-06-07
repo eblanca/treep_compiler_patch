@@ -1,0 +1,71 @@
+
+Patch file for TreeP
+====================
+
+This repository offers a patch file which makes TreeP buildable on modern
+linux systems (tested on debian, mint and several ubuntu flavors).
+
+TreeP is a programming language designed and written by Frank Sinapsi, and he
+used it to develop some interesting applications: most people will already know
+Avinaptic (which creates detailed reports out of video clips, encoded in
+any format and streamed in any container you like) but also others.
+
+The provided TreeP package ships with full source code for both compiler and
+run-time libraries BUT today it does not build as-is anymore (latest release
+dates 2012) because some libraries it needs had changed a bit (most noticeably
+opencv and ffmpeg libs). Now, this means it may be tricky to get any
+applications written in TreeP compile and run.
+
+This is where this patch comes into play, as it updates some included headers
+and macros in order to build the whole compiler suite successfully. Then, you
+will be able to compile your preferred applications written in TreeP.
+
+
+Usage:
+------
+Download TreeP source package (trp-20120628.zip) from Sinapsi's web site and
+unpack it. Then download this patch and run:
+cd trp-20120628/
+patch -i <patch_file> -p1
+
+Now, open 00leggimi and follow the instructions to build the whole compiler
+suite.
+
+
+Questions & Answers:
+--------------------
+
+Q: Will it make TreeP buildable on my *** distribution/OS?
+A: I don't know, just try. Just, if you like helping other people, please
+   report here your achievements, WHATEVER they are (success/failure).
+
+Q: Did you update/fix the compiler?
+A: No, I didn't, this patch ONLY makes the source code buildable. I am not
+   aware of bugs neither into the compiler, nor into the libraries.
+
+Q: Will you update the source code for Sinapsi's applications also?
+A: They don't need any updates. Once you have the compiler, then they will
+   build and run just fine (this is my feedback with Avinaptic, which I
+   actually use very often).
+   Not to mention, I don't know TreeP at all.
+
+Q: Will you provide updated Windows executables?
+A: No, I won't. I don't use Windows currently and I won't setup a VM just for
+   building a compiler I don't need. Sinapsi already provides executables for
+   his applications written in TreeP on the web site, they should still work.
+   MS Windows is all about backward compatibility.
+
+Q: The source code for TreeP is under GPL-v3 license, so you can host the whole
+   updated source code into your own repository, instead of having to download
+   the original source package and then patch it.
+   Wouldn't it be easier this way?
+A: I'm just too lazy.
+
+
+References:
+-----------
+Sinapsi's home page:
+http://fsinapsi.altervista.org/
+
+
+
